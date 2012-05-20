@@ -107,20 +107,22 @@ module KindleFS
         doc = Rindle::Document.find_by_name $1
         doc = Rindle::Document.create $1 unless doc
         FileUtils.touch(File.join(Rindle.root_path, doc.path))
+        Rindle.save
+        true
+      else
+        false
       end
-      Rindle.save
-      true
     end
 
     def mkdir(path)
       if path =~ COLLECTION_PATH
         col = Rindle::Collection.find_by_name $1
         Rindle::Collection.create($1) if col.nil?
+        Rindle.save
+        true
       else
         false
       end
-      Rindle.save
-      true
     end
 
     def rmdir(path)
