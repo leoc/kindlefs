@@ -9,7 +9,7 @@ module KindleFS
     PICTURES_PATH    = /^\/pictures$/.freeze
     COLLECTION_NAME  = /([A-Za-z0-9_\-\s'"\.]+)/i.freeze
     COLLECTION_PATH  = /^#{COLLECTIONS_PATH.strip}\/#{COLLECTION_NAME.strip}$/.freeze
-    DOCUMENT_NAME    = /([A-Za-z0-9_\s\-]+\.(mobi|epub|rtf|pdf|azw|azw1)+)/i.freeze
+    DOCUMENT_NAME    = /([A-Za-z0-9_\s,\.\[\]\(\)'&!\-]+\.(mobi|epub|rtf|pdf|azw|azw1)+)/i.freeze
     COLLECTION_DOCUMENT_PATH   = /^#{COLLECTIONS_PATH.strip}\/#{COLLECTION_NAME.strip}\/#{DOCUMENT_NAME.strip}$/.freeze
     UNASSOCIATED_DOCUMENT_PATH = /^#{COLLECTIONS_PATH.strip}\/#{DOCUMENT_NAME.strip}$/.freeze
     DOCUMENT_PATH    = /^#{DOCUMENTS_PATH.strip}\/#{DOCUMENT_NAME.strip}$/.freeze
