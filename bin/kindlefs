@@ -22,7 +22,7 @@ mount_path = ARGV.shift.sub(/#{Regexp.escape(File::SEPARATOR)}$/, '')
 
 Rindle::load(kindle_root)
 
-kindle = Rindle::Filesystem.new
+kindle = KindleFS::Filesystem.new
 FuseFS.set_root kindle
 FuseFS.mount_under mount_path
 FuseFS.run
