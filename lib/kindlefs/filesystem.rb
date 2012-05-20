@@ -56,12 +56,13 @@ module KindleFS
       end
     end
 
-    def executable?(path)
+    def executable? path
       false
     end
 
-    def size(path)
-      read_file(path).size
+    def size path
+      doc = Rindle::Document.find_by_name File.basename(path)
+      File.size File.join(Rindle.root_path, doc.path)
     end
 
     def can_delete?(path)
@@ -100,15 +101,19 @@ module KindleFS
     end
 
     def touch(path, val = 0)
-      puts "touch(#{path} --- #{val})"
+      filename = File.basename(path)
+      case path
+      when UNASSOCIATED_DOCUMENT_PATH, DOCUMENT_PATH
+        doc = Rindle::Document.find_by_name $1
+        doc = Rindle::Document.create $1 unless doc
+        FileUtils.touch(File.join(Rindle.root_path, doc.path))
+      end
     end
 
     def mkdir(path)
       if path =~ COLLECTION_PATH
         collection = Rindle::Collection.first :named => $1
         collection = Rindle::Collection.create($1) if collection.nil?
-        puts Rindle::Collection.all.map(&:name).inspect
-        puts collection.to_hash.inspect
         true
       else
         false
@@ -127,31 +132,43 @@ module KindleFS
     end
 
     def delete path
-      puts "delete(#{path})"
-      # TODO: if collection_doc_path, remove from collection
-      # TODO: if document_path, remove document and all references
-      # TODO: if unassociated document path, remove doc and all refs
+      case path
+      when COLLECTION_DOCUMENT_PATH
+        col = Rindle::Collection.find_by_name $1
+        doc = Rindle::Document.find_by_name $2
+        col.remove doc
+      when DOCUMENT_PATH, UNASSOCIATED_DOCUMENT_PATH
+        doc = Rindle::Document.find_by_name $1
+        doc.delete!
+      end
     end
 
     def rename old, new
-      puts "rename(#{old}, #{new})"
       case old
       when UNASSOCIATED_DOCUMENT_PATH
-        document = Rindle::Document.find_by_name $1
-        if document and !document.amazon?
-          document.rename! File.basename(new)
-          true
+        doc = Rindle::Document.find_by_name $1
+        if new =~ COLLECTION_DOCUMENT_PATH
+          col = Rindle::Collection.find_by_name $1
+          col.add doc
+        end
+        if doc and !doc.amazon?
+          doc.rename! File.basename(new)
         else
           false
         end
-        # TODO: if new is collection_document_path => add to collection
-        # TODO: if new is unassociated_document_path => rename document
       when COLLECTION_DOCUMENT_PATH
+        old_col = Rindle::Collection.find_by_name $1
         doc = Rindle::Document.find_by_name $2
-        # TODO: if new is COLLECTION_DOCUMENT_PATH for the same collection
-        # => rename
-        # TODO: if new is COLLECTION_DOCUMENT_PATH for another collection =>
-        # remove from old collection, add to new collection
+        if new =~ COLLECTION_DOCUMENT_PATH
+          new_col = Rindle::Collection.find_by_name $1
+          unless old_col == new_col
+            old_col.remove doc
+            new_col.add doc
+          end
+          doc.rename! File.basename(new)
+        else
+          false
+        end
       when COLLECTION_PATH
         collection = Rindle::Collection.find_by_name $1
         if new =~ COLLECTION_PATH
@@ -166,17 +183,26 @@ module KindleFS
     end
 
     def write_to path, body
-      # TODO: if doc exists and unassociated_path => do nothing
-      # else if collection_path => add to collection
-      # TODO: if doc does not exist write file into kindle_root/documents
-      # if path is collection_path add to collection
-      puts "write_to(#{path}, #{body})"
+      doc = Rindle::Document.find_by_name File.basename(path)
+      if doc
+        if path =~ COLLECTION_DOCUMENT_PATH
+          col = Rindle::Collection.find_by_name $1
+          col.add doc
+        end
+      else
+        doc = Rindle::Document.create File.basename(path)
+        File.open(File.join(Rindle.root_path, doc.path), 'w+') do |f|
+          f.write body
+        end
+        if path =~ COLLECTION_DOCUMENT_PATH
+          Rindle::Collection.find_by_name($1).add doc
+        end
+      end
     end
 
     def read_file path
-      puts "read_file(#{path})"
-      "dummy text der da in der Datei steht ...\n"
-      # TODO: return actual file data
+      doc = Rindle::Document.find_by_name File.basename(path)
+      File.read File.join(Rindle.root_path, doc.path)
     end
   end
 end
