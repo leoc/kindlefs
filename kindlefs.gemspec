@@ -16,6 +16,7 @@ Gem::Specification.new do |gem|
   gem.version       = KindleFS::VERSION
 
   gem.add_development_dependency 'guard-rspec'
+  gem.add_development_dependency 'rake'
   gem.add_development_dependency 'rspec'
   gem.add_dependency 'rfusefs'
   gem.add_dependency 'rindle'
