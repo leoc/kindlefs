@@ -1,14 +1,1 @@
-{
-    "collection1@en-US":{
-        "items":["*18be6fcd5d5df39c1a96cd22596bbe7fe01db9b7", "*0849dd9b85fc341d10104f56985e423b3848e1f3"],
-        "lastAccess": 1298745909919
-    },
-    "collection2@en-US":{
-        "items":["*440f49b58ae78d34f4b8ad3233f04f6b8f5490c2"],
-        "lastAccess": 1298745909918
-    },
-    "amazon books@en-US":{
-        "items":["#B001UQ5HVA^EBSP","#B000JQU1VS^EBOK"],
-        "lastAccess": 1298745909917
-    }
-}
+{"collection2@en-US":{"items":["*440f49b58ae78d34f4b8ad3233f04f6b8f5490c2","*5c4dc5c9e385385cbcaf1beedef7690c165a39ca"],"lastAccess":1298745909918},"amazon books@en-US":{"items":["#B001UQ5HVA^EBSP","#B000JQU1VS^EBOK"],"lastAccess":1298745909917},"test collection@en-US":{"items":[],"lastAccess":0},"collection1@en-US":{"items":["*0849dd9b85fc341d10104f56985e423b3848e1f3","*18be6fcd5d5df39c1a96cd22596bbe7fe01db9b7"],"lastAccess":1298745909919}}
