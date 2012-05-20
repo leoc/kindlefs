@@ -108,27 +108,31 @@ module KindleFS
         doc = Rindle::Document.create $1 unless doc
         FileUtils.touch(File.join(Rindle.root_path, doc.path))
       end
+      Rindle.save
+      true
     end
 
     def mkdir(path)
       if path =~ COLLECTION_PATH
-        collection = Rindle::Collection.first :named => $1
-        collection = Rindle::Collection.create($1) if collection.nil?
-        true
+        col = Rindle::Collection.find_by_name $1
+        Rindle::Collection.create($1) if col.nil?
       else
         false
       end
+      Rindle.save
+      true
     end
 
     def rmdir(path)
       if path =~ COLLECTION_PATH
         collection = Rindle::Collection.first :named => $1
-        if collection
-          collection.destroy!
-          return true
-        end
+        return false unless collection
+        collection.destroy!
+      else
+        return false
       end
-      false
+      Rindle.save
+      true
     end
 
     def delete path
@@ -141,6 +145,8 @@ module KindleFS
         doc = Rindle::Document.find_by_name $1
         doc.delete!
       end
+      Rindle.save
+      true
     end
 
     def rename old, new
@@ -154,7 +160,7 @@ module KindleFS
         if doc and !doc.amazon?
           doc.rename! File.basename(new)
         else
-          false
+          return false
         end
       when COLLECTION_DOCUMENT_PATH
         old_col = Rindle::Collection.find_by_name $1
@@ -167,19 +173,20 @@ module KindleFS
           end
           doc.rename! File.basename(new)
         else
-          false
+          return false
         end
       when COLLECTION_PATH
         collection = Rindle::Collection.find_by_name $1
         if new =~ COLLECTION_PATH
           collection.rename! File.basename(new)
-          true
         else
-          false
+          return false
         end
       else
-        false
+        return false
       end
+      Rindle.save
+      true
     end
 
     def write_to path, body
@@ -198,6 +205,8 @@ module KindleFS
           Rindle::Collection.find_by_name($1).add doc
         end
       end
+      Rindle.save
+      true
     end
 
     def read_file path
