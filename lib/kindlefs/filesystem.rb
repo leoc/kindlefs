@@ -3,16 +3,16 @@ require 'rindle/mixins/regexp'
 
 module KindleFS
   class Filesystem < FuseFS::FuseDir
-    ROOT_PATH        = /^\/$/
-    COLLECTIONS_PATH = /^\/collections$/.freeze
-    DOCUMENTS_PATH   = /^\/documents$/.freeze
-    PICTURES_PATH    = /^\/pictures$/.freeze
-    COLLECTION_NAME  = /([A-Za-z0-9_\-\s'"\.]+)/i.freeze
-    COLLECTION_PATH  = /^#{COLLECTIONS_PATH.strip}\/#{COLLECTION_NAME.strip}$/.freeze
-    DOCUMENT_NAME    = /([A-Za-z0-9_\s,\.\[\]\(\)'&!\-]+\.(mobi|epub|rtf|pdf|azw|azw1)+)/i.freeze
+    ROOT_PATH                  = /^\/$/
+    COLLECTIONS_PATH           = /^\/collections$/.freeze
+    DOCUMENTS_PATH             = /^\/documents$/.freeze
+    PICTURES_PATH              = /^\/pictures$/.freeze
+    COLLECTION_NAME            = /([A-Za-z0-9_\-\s'"\.]+)/i.freeze
+    COLLECTION_PATH            = /^#{COLLECTIONS_PATH.strip}\/#{COLLECTION_NAME.strip}$/.freeze
+    DOCUMENT_NAME              = /([A-Za-z0-9_\s,\.\[\]\(\)'&!\-]+\.(mobi|epub|rtf|pdf|azw|azw1)+)/i.freeze
     COLLECTION_DOCUMENT_PATH   = /^#{COLLECTIONS_PATH.strip}\/#{COLLECTION_NAME.strip}\/#{DOCUMENT_NAME.strip}$/.freeze
     UNASSOCIATED_DOCUMENT_PATH = /^#{COLLECTIONS_PATH.strip}\/#{DOCUMENT_NAME.strip}$/.freeze
-    DOCUMENT_PATH    = /^#{DOCUMENTS_PATH.strip}\/#{DOCUMENT_NAME.strip}$/.freeze
+    DOCUMENT_PATH              = /^#{DOCUMENTS_PATH.strip}\/#{DOCUMENT_NAME.strip}$/.freeze
 
     def contents path
       case path
@@ -28,12 +28,16 @@ module KindleFS
       else
         []
       end
+    rescue Exception => e
+      puts e
+      false
     end
 
     def file?(path)
       case path
       when DOCUMENT_PATH
-        return true
+        doc = Rindle::Document.find_by_name $1
+        return !doc.nil?
       when COLLECTION_DOCUMENT_PATH
         col = Rindle::Collection.find_by_name $1
         doc = Rindle::Document.find_by_name $2
@@ -43,6 +47,9 @@ module KindleFS
         return doc.collections.empty? if doc
       end
       false
+    rescue Exception => e
+      puts e
+      false
     end
 
     def directory?(path)
@@ -50,10 +57,14 @@ module KindleFS
       when COLLECTIONS_PATH, DOCUMENTS_PATH, PICTURES_PATH
         true
       when COLLECTION_PATH
-        Rindle::Collection.exists?(:named => $1)
+        col = Rindle::Collection.find_by_name $1
+        !col.nil?
       else
         false
       end
+    rescue Exception => e
+      puts e
+      false
     end
 
     def executable? path
@@ -61,20 +72,29 @@ module KindleFS
     end
 
     def size path
+      puts "size #{path}"
       doc = Rindle::Document.find_by_name File.basename(path)
       File.size File.join(Rindle.root_path, doc.path)
+    rescue Exception => e
+      puts e
+      false
     end
 
     def can_delete?(path)
+      puts "can_delete? #{path}"
       case path
       when DOCUMENTS_PATH, PICTURES_PATH, COLLECTIONS_PATH
         false
       else
         true
       end
+    rescue Exception => e
+      puts e
+      false
     end
 
     def can_write?(path)
+      puts "can_write? #{path}"
       if path !~ ROOT_PATH
         true
       else
@@ -83,6 +103,7 @@ module KindleFS
     end
 
     def can_mkdir?(path)
+      puts "can_mkdir? #{path}"
       case path
       when COLLECTION_PATH
         true
@@ -92,15 +113,20 @@ module KindleFS
     end
 
     def can_rmdir?(path)
+      puts "can_rmdir #{path}"
       case path
       when COLLECTION_PATH
         true
       else
         false
       end
+    rescue Exception => e
+      puts e
+      false
     end
 
     def touch(path, val = 0)
+      puts "touch #{path}"
       filename = File.basename(path)
       case path
       when UNASSOCIATED_DOCUMENT_PATH, DOCUMENT_PATH
@@ -112,9 +138,13 @@ module KindleFS
       else
         false
       end
+    rescue Exception => e
+      puts e
+      false
     end
 
     def mkdir(path)
+      puts "mkdir #{path}"
       if path =~ COLLECTION_PATH
         col = Rindle::Collection.find_by_name $1
         Rindle::Collection.create($1) if col.nil?
@@ -123,9 +153,13 @@ module KindleFS
       else
         false
       end
+    rescue Exception => e
+      puts e
+      false
     end
 
     def rmdir(path)
+      puts "rmdir #{path}"
       if path =~ COLLECTION_PATH
         collection = Rindle::Collection.first :named => $1
         return false unless collection
@@ -135,9 +169,13 @@ module KindleFS
       end
       Rindle.save
       true
+    rescue Exception => e
+      puts e
+      false
     end
 
     def delete path
+      puts "delete #{path}"
       case path
       when COLLECTION_DOCUMENT_PATH
         col = Rindle::Collection.find_by_name $1
@@ -149,6 +187,9 @@ module KindleFS
       end
       Rindle.save
       true
+    rescue Exception => e
+      puts e
+      false
     end
 
     def rename old, new
@@ -189,6 +230,9 @@ module KindleFS
       end
       Rindle.save
       true
+    rescue Exception => e
+      puts e
+      false
     end
 
     def write_to path, body
@@ -209,11 +253,17 @@ module KindleFS
       end
       Rindle.save
       true
+    rescue Exception => e
+      puts e
+      false
     end
 
     def read_file path
       doc = Rindle::Document.find_by_name File.basename(path)
-      File.read File.join(Rindle.root_path, doc.path)
+      doc.filename
+    rescue Exception => e
+      puts "read file error: #{e}"
+      ''
     end
   end
 end

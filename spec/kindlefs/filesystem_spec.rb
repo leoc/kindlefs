@@ -23,6 +23,12 @@ describe KindleFS::Filesystem do
       '/documents'.should_not match(KindleFS::Filesystem::COLLECTIONS_PATH)
       '/collections/dummy'.should_not match(KindleFS::Filesystem::COLLECTIONS_PATH)
     end
+
+    it 'should match a collections document path correctly' do
+      '/collections/collection1/The 4 Hour Workweek Escape 9 5 L-asin_B000PDZF70-type_EBOK-v_0.azw'.
+        should match KindleFS::Filesystem::COLLECTION_DOCUMENT_PATH
+    end
+
   end
 
   describe '#contents' do
